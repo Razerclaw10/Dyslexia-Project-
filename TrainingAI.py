@@ -3,6 +3,8 @@ import cv2
 import os
 import time
 
+st.set_page_config(layout="wide")
+
 # Function to record the webcam
 def record_webcam(filename="recording.avi", fps=20.0, resolution=(640, 480)):
     """Records video from the default webcam and saves it to a file."""
