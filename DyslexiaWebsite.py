@@ -216,9 +216,9 @@ import os
 from scipy.spatial.distance import euclidean
 from collections import deque
 import mediapipe as mp
-from PIL import Image
 
 class PupilTracker:
+
     def __init__(self):
         self.mp_face_mesh = mp.solutions.face_mesh
         self.face_mesh = self.mp_face_mesh.FaceMesh(
@@ -281,7 +281,7 @@ class PupilTracker:
             if self.current_fixation is None:
                 self.current_fixation = {
                     'start_time': timestamps[0],
-                    'position': np.mean(positions, axis=0),
+                    'position': np.mean(positions, axis=0) if len(positions) > 0 else None,
                     'duration': duration
                 }
             else:
@@ -323,98 +323,92 @@ def main():
     if 'text_displayed' not in st.session_state:
         st.session_state.text_displayed = False
 
-    # File upload instead of webcam
-    uploaded_file = st.file_uploader("Choose an image or video...", type=["jpg", "jpeg", "png", "mp4"])
+    # Camera input
+    cap = cv2.VideoCapture(0)
+    frame_placeholder = st.empty()
+    text_placeholder = st.empty()  # Placeholder for sample text
 
-    if uploaded_file is not None:
-        if uploaded_file.type in ["image/jpeg", "image/png", "image/jpg"]:
-            image = Image.open(uploaded_file)
-            st.image(image, caption="Uploaded Image", use_column_width=True)
-        elif uploaded_file.type == "video/mp4":
-            video = cv2.VideoCapture(uploaded_file)
-            # Continue with your frame processing logic
-            frame_placeholder = st.empty()
-            text_placeholder = st.empty()  # Placeholder for sample text
+    # Control buttons
+    col1, col2 = st.columns(2)
+    start_button = col1.button("Start Recording")
+    stop_button = col2.button("Stop Recording")
 
-            # Control buttons
-            col1, col2 = st.columns(2)
-            start_button = col1.button("Start Recording")
-            stop_button = col2.button("Stop Recording")
+    if start_button:
+        st.session_state.recording = True
+        st.session_state.tracker.tracking_data = []
 
-            if start_button:
-                st.session_state.recording = True
-                st.session_state.tracker.tracking_data = []
+        # Show sample text only once
+        if not st.session_state.text_displayed:
+            text_placeholder.empty()
+            sample_text()
+            st.session_state.text_displayed = True
 
-                # Show sample text only once
-                if not st.session_state.text_displayed:
-                    text_placeholder.empty()
-                    sample_text()
-                    st.session_state.text_displayed = True
+    if stop_button:
+        st.session_state.recording = False
+        st.session_state.text_displayed = False  # Reset the state
+        text_placeholder.empty()  # Remove the sample text
 
-            if stop_button:
-                st.session_state.recording = False
-                st.session_state.text_displayed = False  # Reset the state
-                text_placeholder.empty()  # Remove the sample text
+        # Save data
+        if len(st.session_state.tracker.tracking_data) > 0:
+            df = pd.DataFrame(st.session_state.tracker.tracking_data)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"pupil_tracking_data_{timestamp}.csv"
+            df.to_csv(filename, index=False)
+            st.success(f"Data saved to {filename}")
 
-                # Save data
-                if len(st.session_state.tracker.tracking_data) > 0:
-                    df = pd.DataFrame(st.session_state.tracker.tracking_data)
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    filename = f"pupil_tracking_data_{timestamp}.csv"
-                    df.to_csv(filename, index=False)
-                    st.success(f"Data saved to {filename}")
+    try:
+        while st.session_state.recording:
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-            try:
-                while st.session_state.recording:
-                    ret, frame = video.read()
-                    if not ret:
-                        break
+            # Process frame
+            frame, left_center, right_center = st.session_state.tracker.detect_pupil(frame)
 
-                    # Process frame
-                    frame, left_center, right_center = st.session_state.tracker.detect_pupil(frame)
+            if left_center is not None and right_center is not None:
+                # Draw pupils
+                cv2.circle(frame, tuple(left_center), 3, (0, 255, 0), -1)
+                cv2.circle(frame, tuple(right_center), 3, (0, 255, 0), -1)
 
-                    if left_center is not None and right_center is not None:
-                        # Draw pupils
-                        cv2.circle(frame, tuple(left_center), 3, (0, 255, 0), -1)
-                        cv2.circle(frame, tuple(right_center), 3, (0, 255, 0), -1)
+                # Detect fixations
+                current_time = time.time() * 1000  # Convert to milliseconds
+                avg_position = np.mean([left_center, right_center], axis=0)
 
-                        # Detect fixations
-                        current_time = time.time() * 1000  # Convert to milliseconds
-                        avg_position = np.mean([left_center, right_center], axis=0)
-                        fixation = st.session_state.tracker.detect_fixation(avg_position, current_time)
+                fixation = st.session_state.tracker.detect_fixation(avg_position, current_time)
 
-                        # Record data if recording is active
-                        if st.session_state.recording:
-                            data_point = {
-                                'timestamp': current_time,
-                                'left_pupil_x': left_center[0],
-                                'left_pupil_y': left_center[1],
-                                'right_pupil_x': right_center[0],
-                                'right_pupil_y': right_center[1],
-                                'is_fixation': fixation is not None
-                            }
-                            if fixation is not None:
-                                data_point.update({
-                                    'fixation_duration': fixation['duration'],
-                                    'fixation_x': fixation['position'][0],
-                                    'fixation_y': fixation['position'][1]
-                                })
-                            st.session_state.tracker.tracking_data.append(data_point)
+                # Record data if recording is active
+                if st.session_state.recording:
+                    data_point = {
+                        'timestamp': current_time,
+                        'left_pupil_x': left_center[0],
+                        'left_pupil_y': left_center[1],
+                        'right_pupil_x': right_center[0],
+                        'right_pupil_y': right_center[1],
+                        'is_fixation': fixation is not None
+                    }
+                    if fixation is not None:
+                        data_point.update({
+                            'fixation_duration': fixation['duration'],
+                            'fixation_x': fixation['position'][0] if fixation['position'] is not None else None,
+                            'fixation_y': fixation['position'][1] if fixation['position'] is not None else None
+                        })
+                    st.session_state.tracker.tracking_data.append(data_point)
 
-                        # Draw fixation
-                        if fixation is not None:
-                            cv2.circle(frame, tuple(fixation['position'].astype(int)),
-                                       10, (0, 0, 255), 2)
+                # Draw fixation
+                if fixation is not None and fixation['position'] is not None:
+                    cv2.circle(frame, tuple(fixation['position'].astype(int)),
+                               10, (0, 0, 255), 2)
 
-                    # Display frame
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    frame_placeholder.image(frame, channels="RGB")
+            # Display frame
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame_placeholder.image(frame, channels="RGB")
 
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
 
-            finally:
-                video.release()
+    finally:
+        cap.release()
+
 
 if __name__ == "__main__":
     main()
