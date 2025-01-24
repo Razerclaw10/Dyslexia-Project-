@@ -144,7 +144,7 @@ def main():
         if len(st.session_state.tracker.tracking_data) > 0:
             df = pd.DataFrame(st.session_state.tracker.tracking_data)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"pupil_tracking_data.csv"
+            filename = "pupil_tracking_data.csv"
             df.to_csv(filename, index=False)
             st.success(f"Data saved to {filename}")
 
