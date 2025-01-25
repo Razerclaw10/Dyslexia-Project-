@@ -7,3 +7,4 @@ streamlit>=1.0.0
 opencv-contrib-python-headless>=4.5.0
 scipy>=1.7.0
 mediapipe
+streamlit-webrtc
