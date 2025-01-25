@@ -117,6 +117,8 @@ def main():
 
     # Camera input
     cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        st.error("Error: Unable to access the camera.")
     frame_placeholder = st.empty()
     text_placeholder = st.empty()  # Placeholder for sample text
 
