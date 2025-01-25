@@ -192,7 +192,7 @@ def main():
 
     st.title("Advanced Pupil Tracker")
 
-    webrtc_streamer(key="example", video_transformer_factory=VideoTransformer)
+    webrtc_streamer(key="example", video_processor_factory=VideoTransformer)
 
     if st.button("Start Recording"):
 
