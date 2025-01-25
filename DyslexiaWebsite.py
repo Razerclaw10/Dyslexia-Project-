@@ -116,7 +116,7 @@ def main():
         st.session_state.text_displayed = False
 
     # Camera input
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     if not cap.isOpened():
         st.error("Error: Unable to access the camera.")
     frame_placeholder = st.empty()
