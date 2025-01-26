@@ -8,6 +8,7 @@ import os
 from scipy.spatial.distance import euclidean
 from collections import deque
 import mediapipe as mp
+from dyslexia_detector import DyslexiaDetector
 
 class PupilTracker:
 
@@ -106,6 +107,9 @@ def main():
     st.title("Advanced Pupil Tracker")
 
     # Initialize session state
+    if 'detector' not in st.session_state:
+        st.session_state.detector = DyslexiaDetector()
+        
     if 'tracker' not in st.session_state:
         st.session_state.tracker = PupilTracker()
 
@@ -142,7 +146,27 @@ def main():
 
         # Save data
         if len(st.session_state.tracker.tracking_data) > 0:
+             # Prepare fixation data
             df = pd.DataFrame(st.session_state.tracker.tracking_data)
+            
+            fixation_data = df[df['is_fixation']].copy()
+
+            fixation_data['duration'] = fixation_data['fixation_duration']
+
+            fixation_data['x'] = fixation_data['fixation_x']
+
+            fixation_data['y'] = fixation_data['fixation_y']
+
+            # Make prediction
+            prediction_proba = st.session_state.detector.predict(fixation_data)
+     
+            # Show results
+            st.write("Analysis Results:")
+
+            st.write(f"Probability of Dyslexia: {prediction_proba[1]:.2%}")
+
+            st.write(f"Probability of No Dyslexia: {prediction_proba[0]:.2%}")
+        
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"pupil_tracking_data_{filename}.csv"
             df.to_csv(filename, index=False)
