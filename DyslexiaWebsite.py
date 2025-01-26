@@ -1,7 +1,5 @@
 import streamlit as st
 
-import cv2
-
 import numpy as np
 
 import pandas as pd
@@ -10,15 +8,15 @@ import time
 
 from datetime import datetime
 
-import os
-
-from scipy.spatial.distance import euclidean
-
 from collections import deque
 
 import mediapipe as mp
 
-class PupilTracker:
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+
+from scipy.spatial.distance import euclidean
+
+class PupilTracker(VideoTransformerBase):
 
     def __init__(self, fixation_threshold=30, fixation_duration=100):
 
@@ -51,6 +49,30 @@ class PupilTracker:
         self.fixations = []
 
         self.tracking_data = []
+
+    def transform(self, frame):
+
+        frame = frame.to_ndarray(format="bgr24")
+
+        frame, left_center, right_center = self.detect_pupil(frame)
+
+        if left_center is not None and right_center is not None:
+
+            cv2.circle(frame, tuple(left_center), 3, (0, 255, 0), -1)
+
+            cv2.circle(frame, tuple(right_center), 3, (0, 255, 0), -1)
+
+            current_time = time.time() * 1000
+
+            avg_position = np.mean([left_center, right_center], axis=0)
+
+            fixation = self.detect_fixation(avg_position, current_time)
+
+            if fixation is not None:
+
+                cv2.circle(frame, tuple(fixation['position'].astype(int)), 10, (0, 0, 255), 2)
+
+        return frame
 
     def detect_pupil(self, frame):
 
@@ -144,12 +166,6 @@ def main():
 
         st.session_state.recording = False
 
-    # Camera input
-
-    cap = cv2.VideoCapture(1)
-
-    frame_placeholder = st.empty()
-
     # Control buttons
 
     col1, col2 = st.columns(2)
@@ -180,77 +196,9 @@ def main():
 
             st.success(f"Data saved to {filename}")
 
-    try:
+    # Streamlit WebRTC component for video capture
 
-        while True:
-
-            ret, frame = cap.read()
-
-            if not ret:
-
-                break
-
-            frame, left_center, right_center = st.session_state.tracker.detect_pupil(frame)
-
-            if left_center is not None and right_center is not None:
-
-                cv2.circle(frame, tuple(left_center), 3, (0, 255, 0), -1)
-
-                cv2.circle(frame, tuple(right_center), 3, (0, 255, 0), -1)
-
-                current_time = time.time() * 1000
-
-                avg_position = np.mean([left_center, right_center], axis=0)
-
-                fixation = st.session_state.tracker.detect_fixation(avg_position, current_time)
-
-                if st.session_state.recording:
-
-                    data_point = {
-
-                        'timestamp': current_time,
-
-                        'left_pupil_x': left_center[0],
-
-                        'left_pupil_y': left_center[1],
-
-                        'right_pupil_x': right_center[0],
-
-                        'right_pupil_y': right_center[1],
-
-                        'is_fixation': fixation is not None
-
-                    }
-
-                    if fixation is not None:
-
-                        data_point.update({
-
-                            'fixation_duration': fixation['duration'],
-
-                            'fixation_x': fixation['position'][0],
-
-                            'fixation_y': fixation['position'][1]
-
-                        })
-
-                    st.session_state.tracker.tracking_data.append(data_point)
-
-                if fixation is not None:
-
-                    cv2.circle(frame, tuple(fixation['position'].astype(int)), 10, (0, 0, 255), 2)
-
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            frame_placeholder.image(frame, channels="RGB")
-
-    except Exception as e:
-
-        st.error(f"Error: {str(e)}")
-
-    finally:
-
-        cap.release()
+    webrtc_streamer(key="example", video_transformer_factory=lambda: st.session_state.tracker)
 
 if __name__ == "__main__":
 
