@@ -156,7 +156,7 @@ def main():
 
     fixation_duration = st.slider("Fixation Duration (milliseconds)", 50, 500, 100)
 
-    # Initialize session state
+    # Initialize session state for tracker and recording state
 
     if 'tracker' not in st.session_state:
 
@@ -198,7 +198,7 @@ def main():
 
     # Streamlit WebRTC component for video capture
 
-    webrtc_streamer(key="example", video_processor_factory=lambda: st.session_state.tracker)
+    webrtc_streamer(key="example", video_transformer_factory=lambda: st.session_state.tracker)
 
 if __name__ == "__main__":
 
