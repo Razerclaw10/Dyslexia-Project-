@@ -2,6 +2,8 @@ import streamlit as st
 
 import numpy as np
 
+import cv2
+
 import pandas as pd
 
 import time
@@ -88,7 +90,7 @@ class PupilTracker:
 
         timestamps = np.array([p[1] for p in self.positions_history])
 
-        max_distance = max([euclidean(positions[0], p) for p in positions])
+        max_distance = max([np.linalg.norm(positions[0] - p) for p in positions])
 
         duration = timestamps[-1] - timestamps[0]
 
@@ -140,8 +142,6 @@ class VideoTransformer(VideoTransformerBase):
 
             if left_center is not None and right_center is not None:
 
-                # Draw pupils
-
                 cv2.circle(img, tuple(left_center), 3, (0, 255, 0), -1)
 
                 cv2.circle(img, tuple(right_center), 3, (0, 255, 0), -1)
@@ -192,15 +192,15 @@ def main():
 
     st.title("Advanced Pupil Tracker")
 
-    webrtc_streamer(key="example", video_processor_factory=VideoTransformer)
+    webrtc_streamer(key="example", video_transformer_factory=VideoTransformer)
 
     if st.button("Start Recording"):
 
-        VideoTransformer().recording = True
+        VideoTransformer(recording=True)
 
     if st.button("Stop Recording"):
 
-        VideoTransformer().recording = False
+        VideoTransformer(recording=False)
 
 if __name__ == "__main__":
 
