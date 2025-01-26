@@ -146,7 +146,7 @@ def main():
 
     # Camera input
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
 
     frame_placeholder = st.empty()
 
