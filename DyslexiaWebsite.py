@@ -150,15 +150,17 @@ def main():
 
     st.title("Advanced Pupil Tracker")
 
-    # User inputs for configuration
+    # User inputs configuration
 
     fixation_threshold = st.slider("Fixation Threshold (pixels)", 10, 100, 30)
 
     fixation_duration = st.slider("Fixation Duration (milliseconds)", 50, 500, 100)
 
-    # Initialize session state for tracker and recording state
+    # Ensure tracker initialization in session state
 
-    if 'tracker' not in st.session_state:
+    if 'tracker' not in st.session_state or (st.session_state.tracker.fixation_threshold != fixation_threshold 
+
+        or st.session_state.tracker.fixation_duration != fixation_duration):
 
         st.session_state.tracker = PupilTracker(fixation_threshold, fixation_duration)
 
@@ -178,7 +180,7 @@ def main():
 
         st.session_state.recording = True
 
-        st.session_state.tracker.tracking_data = []
+        st.session_state.tracker.tracking_data = []  # Ensure this tracking_data is reset.
 
     if stop_button:
 
@@ -196,7 +198,7 @@ def main():
 
             st.success(f"Data saved to {filename}")
 
-    # Streamlit WebRTC component for video capture
+    # Passing the current tracker to WebRTC component
 
     webrtc_streamer(key="example", video_transformer_factory=lambda: st.session_state.tracker)
 
