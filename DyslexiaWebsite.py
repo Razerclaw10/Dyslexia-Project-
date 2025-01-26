@@ -200,7 +200,7 @@ def main():
 
     # Passing the current tracker to WebRTC component
 
-    webrtc_streamer(key="example", video_transformer_factory=lambda: st.session_state.tracker)
+    webrtc_streamer(key="example", video_processor_factory=lambda: st.session_state.tracker)
 
 if __name__ == "__main__":
 
