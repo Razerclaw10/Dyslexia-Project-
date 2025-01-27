@@ -86,22 +86,73 @@ class PupilTracker:
 
         return self.current_fixation
 
-
 def sample_text():
     st.markdown("""
     <style>
     .big-font {
         font-size:30px !important;
+        cursor: pointer;
+    }
     </style>
     """, unsafe_allow_html=True)
-    st.markdown('<p class="big-font">Please Read The Following: </p>', unsafe_allow_html=True)
+
+    st.markdown('<p class="big-font" onclick="openFullscreen()">Please Read The Following: </p>', unsafe_allow_html=True)
+    
     st.write("""
-        The cat sat on the mat. Yesterday, it was raining—pouring, actually! 
-        Does the small, striped feline like to play? Sometimes, the mat is red, but other times it’s blue. 
-        Surprisingly, the cat didn't care. She simply stared at the puddles. Puddles, puddles, and more puddles! 
-        “Why are there so many?” thought the curious cat. What would you think if you saw puddles everywhere?
+        Little Pepík preferred to stay at home reading books full of adventures 
+        rather than playing outside with other children. Perhaps this was also 
+        influenced by his injured leg, which prevented him from much mischief. 
+        Instead, he immersed himself in stories full of sneaky Indians, brave 
+        pioneers, or mischievous pirates. Occasionally, he would sadly look out
+        the window at his friends playing and watch their lively games from afar.         
+        
+        One day, while he was, as usual, partially hidden behind the curtain, he
+        noticed that some shadow was moving like a flash up and down the tree. A 
+        small, brown, and very agile squirrel was darting around the tree, searching
+        for nuts to store in its secret hideaway.
     """)
 
+def open_full_screen_text():
+    st.markdown("""
+    <script>
+    function openNewWindow() {
+        var newWindow = window.open("", "_blank", "width=800,height=600");
+        newWindow.document.write(`
+            <html>
+            <head>
+                <title>Full Screen Text</title>
+                <style>
+                    body {
+                        font-size: 20px;
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 20px;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                        background-color: #f4f4f4;
+                    }
+                    .content {
+                        width: 80%;
+                        text-align: justify;
+                        overflow: auto;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="content">
+                    <h2>Please Read The Following:</h2>
+                    <p>Little Pepík preferred to stay at home reading books full of adventures rather than playing outside with other children. Perhaps this was also influenced by his injured leg, which prevented him from much mischief. Instead, he immersed himself in stories full of sneaky Indians, brave pioneers, or mischievous pirates. Occasionally, he would sadly look out the window at his friends playing and watch their lively games from afar. One day, while he was, as usual, partially hidden behind the curtain, he noticed that some shadow was moving like a flash up and down the tree. A small, brown, and very agile squirrel was darting around the tree, searching for nuts to store in its secret hideaway.</p>
+                </div>
+            </body>
+            </html>
+        `);
+        newWindow.document.close();
+    }
+    openNewWindow();
+    </script>
+    """, unsafe_allow_html=True)
 
 def main():
     st.title("Advanced Pupil Tracker")
@@ -118,6 +169,7 @@ def main():
 
     if 'text_displayed' not in st.session_state:
         st.session_state.text_displayed = False
+    
     # Camera input
     cap = cv2.VideoCapture(0)
     frame_placeholder = st.empty()
@@ -127,6 +179,12 @@ def main():
     col1, col2 = st.columns(2)
     start_button = col1.button("Start Recording")
     stop_button = col2.button("Stop Recording")
+
+    # Full-screen button
+    fullscreen_button = st.button("Show Text in Full-Screen")  # New full-screen button
+
+    if fullscreen_button:
+        open_full_screen_text()  # Open the full-screen window with text
 
     if start_button:
         st.session_state.recording = True
@@ -233,7 +291,6 @@ def main():
 
     finally:
         cap.release()
-
 
 if __name__ == "__main__":
     main()
