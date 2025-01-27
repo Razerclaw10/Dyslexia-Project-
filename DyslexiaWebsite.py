@@ -162,10 +162,18 @@ def main():
 
             st.header("Dyslexia Detection Results")
 
-            if prediction:
-                st.warning(f"Indicators of dyslexia detected (Confidence: {probability[1]:.2f})")
+            if prediction is not None:
+
+                if len(probability) > 1:
+
+                    st.warning(f"Indicators of dyslexia detected (Confidence: {probability[1]:.2f})")
+
+                else:
+
+                    st.warning("Prediction made, but confidence levels are not available.")
 
             else:
+
                 st.success(f"No indicators of dyslexia detected (Confidence: {probability[0]:.2f})")
         
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
