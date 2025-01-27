@@ -1,12 +1,12 @@
 # train_model.py
 
-import pandas as pd
+#import pandas as pd
 
 from dyslexia_model import DyslexiaDetector
 
 # Function to create and save the dataset (if not already available)
 
-def create_dataset():
+"""def create_dataset():
 
     data = {
 
@@ -32,7 +32,7 @@ def create_dataset():
 
     df.to_csv('path_to_ETDD70_dataset.csv', index=False)
 
-    print("Dataset created and saved as path_to_ETDD70_dataset.csv")
+    print("Dataset created and saved as path_to_ETDD70_dataset.csv")"""
 
 # Main training function
 
@@ -40,7 +40,7 @@ def main():
 
     # Create dataset if it doesn't exist
 
-    create_dataset()
+  #  create_dataset()
 
     # Train the model
 
