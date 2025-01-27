@@ -100,5 +100,9 @@ class DyslexiaDetector:
         prediction = self.model.predict(features_scaled)
 
         probability = self.model.predict_proba(features_scaled)
+     
+        if probability.shape[1] < 2:
+
+            probability = np.array([[1.0, 0.0]])
 
         return prediction[0], probability[0]
