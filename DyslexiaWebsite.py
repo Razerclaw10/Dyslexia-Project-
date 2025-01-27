@@ -119,6 +119,23 @@ def main():
     if 'text_displayed' not in st.session_state:
         st.session_state.text_displayed = False
 
+    if 'model_trained' not in st.session_state:
+
+        st.session_state.model_trained = False
+
+    if not st.session_state.model_trained:
+
+        try:
+    
+            # Train the model with ETDD70 dataset
+
+            st.session_state.detector.train('path_to_ETDD70_dataset.csv')
+
+            st.session_state.model_trained = True
+
+        except Exception as e:
+
+            st.error(f"Error training model: {str(e)}")
     # Camera input
     cap = cv2.VideoCapture(0)
     frame_placeholder = st.empty()
