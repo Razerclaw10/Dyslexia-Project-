@@ -177,7 +177,7 @@ def main():
                 st.success(f"No indicators of dyslexia detected (Confidence: {probability[0]:.2f})")
         
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"pupil_tracking_data_{filename}.csv"
+            filename = f"pupil_tracking_data_{timestamp}.csv"
             df.to_csv(filename, index=False)
             st.success(f"Data saved to {filename}")
 
