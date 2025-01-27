@@ -13,10 +13,13 @@ import joblib
 class DyslexiaDetector:
 
     def __init__(self):
+        try:
+            self.model = joblib.load('dyslexia_model.pkl')
+            self.scaler = joblib.load('scaler.pkl')
+        except:
+            self.model = RandomForestClassifier(n_estimators=100, random_state=42)
 
-        self.model = RandomForestClassifier(n_estimators=100, random_state=42)
-
-        self.scaler = StandardScaler()
+            self.scaler = StandardScaler()
 
     def extract_features(self, fixation_data):
 
