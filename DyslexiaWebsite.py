@@ -27,7 +27,7 @@ class PupilTracker:
 
         # Parameters for fixation detection
         self.fixation_threshold = 20  # pixels
-        self.fixation_duration = 30  # milliseconds
+        self.fixation_duration = 40  # milliseconds
         self.positions_history = deque(maxlen=10)
         self.current_fixation = None
         self.fixations = []
