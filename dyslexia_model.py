@@ -2,7 +2,7 @@ import pandas as pd
 
 import numpy as np
 
-from sklearn.ensemble import RandomForestClassifier
+import tensorflow as tf
 
 from sklearn.model_selection import train_test_split
 
@@ -13,11 +13,16 @@ import joblib
 class DyslexiaDetector:
 
     def __init__(self):
+
         try:
-            self.model = joblib.load('dyslexia_model.pkl')
+
+            self.model = tf.keras.models.load_model('dyslexia_model.h5')
+
             self.scaler = joblib.load('scaler.pkl')
+
         except:
-            self.model = RandomForestClassifier(n_estimators=100, random_state=42)
+
+            self.model = self._build_model()
 
             self.scaler = StandardScaler()
 
@@ -44,10 +49,38 @@ class DyslexiaDetector:
         }
 
         return pd.Series(features)
+        
+    def _build_model(self):
+
+        model = tf.keras.Sequential([
+
+            tf.keras.layers.Dense(64, activation='relu', input_shape=(6,)),
+
+            tf.keras.layers.Dropout(0.2),
+
+            tf.keras.layers.Dense(32, activation='relu'),
+
+            tf.keras.layers.Dropout(0.2),
+
+            tf.keras.layers.Dense(16, activation='relu'),
+
+            tf.keras.layers.Dense(1, activation='sigmoid')
+
+        ])
+
+        model.compile(
+
+            optimizer='adam',
+
+            loss='binary_crossentropy',
+
+            metrics=['accuracy']
+
+        )
+
+        return model
 
     def train(self, data_path):
-
-        """Train the model using the ETDD70 dataset"""
 
         # Load and preprocess the dataset
 
@@ -79,30 +112,40 @@ class DyslexiaDetector:
 
         X_train_scaled = self.scaler.fit_transform(X_train)
 
+        X_test_scaled = self.scaler.transform(X_test)
+
         # Train the model
 
-        self.model.fit(X_train_scaled, y_train)
+        self.model.fit(
+
+            X_train_scaled, 
+
+            y_train,
+
+            epochs=100,
+
+            batch_size=32,
+
+            validation_data=(X_test_scaled, y_test),
+
+            verbose=1
+
+        )
 
         # Save the model and scaler
 
-        joblib.dump(self.model, 'dyslexia_model.pkl')
+        self.model.save('dyslexia_model.h5')
 
         joblib.dump(self.scaler, 'scaler.pkl')
 
     def predict(self, fixation_data):
 
-        """Predict whether a person has dyslexia based on their fixation data"""
-
         features = self.extract_features(fixation_data)
 
         features_scaled = self.scaler.transform(features.values.reshape(1, -1))
 
-        prediction = self.model.predict(features_scaled)
+        probability = self.model.predict(features_scaled)[0][0]
 
-        probability = self.model.predict_proba(features_scaled)
-     
-        if probability.shape[1] < 2:
+        prediction = (probability > 0.5).astype(int)
 
-            probability = np.array([[1.0, 0.0]])
-
-        return prediction[0], probability[0]
+        return prediction, np.array([1 - probability, probability])
