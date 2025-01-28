@@ -170,6 +170,15 @@ def main():
     if 'text_displayed' not in st.session_state:
         st.session_state.text_displayed = False
 
+    reading_content_button = st.button("Reading Content")
+
+    uploaded_file = st.file_uploader("STEM_Fair_Data", type=["png"])
+
+    if uploaded_file is not None:
+
+        image = Image.open(uploaded_file)
+
+        st.image(image, caption='Uploaded Image.', use_column_width=True)
     # Camera input
     cap = cv2.VideoCapture(0)
     frame_placeholder = st.empty()
