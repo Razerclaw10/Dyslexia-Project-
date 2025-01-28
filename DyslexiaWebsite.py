@@ -140,6 +140,7 @@ def main():
     stop_button = col2.button("Stop Recording")
 
     if start_button:
+        time.sleep(3)
         st.session_state.recording = True
         st.session_state.tracker.tracking_data = []
 
