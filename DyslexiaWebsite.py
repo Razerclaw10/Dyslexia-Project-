@@ -198,85 +198,45 @@ def open_image(image_path):
     """, unsafe_allow_html=True)
 
 def open_full_screen_text():
-
     st.markdown("""
-
     <script>
-
     function openNewWindow() {
-
         var newWindow = window.open("", "_blank", "width=800,height=600");
-
         newWindow.document.write(`
-
             <html>
-
             <head>
-
                 <title>Full Screen Text</title>
-
                 <style>
-
                     body {
-
                         font-size: 20px;
-
                         font-family: Arial, sans-serif;
-
                         margin: 0;
-
                         padding: 20px;
-
                         display: flex;
-
                         justify-content: center;
-
                         align-items: center;
-
                         height: 100vh;
-
                         background-color: #f4f4f4;
-
                     }
-
                     .content {
-
                         width: 80%;
-
                         text-align: justify;
-
                         overflow: auto;
-
                     }
-
                 </style>
-
             </head>
-
             <body>
-
                 <div class="content">
-
                     <h2>Please Read The Following:</h2>
-
                     <p>Little Pepík preferred to stay at home reading books full of adventures rather than playing outside with other children. Perhaps this was also influenced by his injured leg, which prevented him from much mischief. Instead, he immersed himself in stories full of sneaky Indians, brave pioneers, or mischievous pirates. Occasionally, he would sadly look out the window at his friends playing and watch their lively games from afar. One day, while he was, as usual, partially hidden behind the curtain, he noticed that some shadow was moving like a flash up and down the tree. A small, brown, and very agile squirrel was darting around the tree, searching for nuts to store in its secret hideaway.</p>
-
                 </div>
-
             </body>
-
             </html>
-
         `);
-
         newWindow.document.close();
-
     }
-
     openNewWindow();
-
     </script>
-
     """, unsafe_allow_html=True)
 
 def main():
@@ -305,25 +265,14 @@ def main():
     start_button = col1.button("Start Recording")
     stop_button = col2.button("Stop Recording")
 
-    # Full-screen and open image buttons
-
-    fullscreen_button = st.button("Show Text in Full-Screen")  
-
-    open_image_button = st.button("Open Image")  # New button to open image
-
-    # Image path (ensure this path points to a valid image file)
-
-    image_file_path = "path/to/your/image.jpg"  # Update this with the actual image path
+    # Full-screen button
+    fullscreen_button = st.button("Show Text in Full-Screen")  # New full-screen button
 
     if fullscreen_button:
-
-        open_full_screen_text()
-
-    if open_image_button:
-
-        open_image(image_file_path)  # Open the image in a new window
+        open_full_screen_text()  # Open the full-screen window with text
 
     if start_button:
+        time.sleep(3)
         st.session_state.recording = True
         st.session_state.tracker.tracking_data = []
 
