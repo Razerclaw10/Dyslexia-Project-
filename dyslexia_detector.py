@@ -34,7 +34,7 @@ class DyslexiaDetector:
 
         # Prepare data for prediction
 
-        features = fixation_data[['fixation_x', 'fixation_y', 'duration']].values
+        features = fixation_data[['fixation_x', 'fixation_y', 'fixation_duration']].values
 
         predictions = self.model.predict(features)
 
