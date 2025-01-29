@@ -1,53 +1,61 @@
-# train_model.py
+def train_new_model(data_path):
 
-#import pandas as pd
+    # Load data
 
-from dyslexia_model import DyslexiaDetector
+    df = pd.read_csv(data_path)
 
-# Function to create and save the dataset (if not already available)
+    # Select features and target
 
-"""def create_dataset():
+    X = df[['fixation_x', 'fixation_y', 'fixation_duration']]
 
-    data = {
+    y = df['has_dyslexia']
 
-        'participant_id': ['1', '1', '1', '2', '2'],  # Example participant IDs
+    # Preprocess
 
-        'fixation_duration': [150, 200, 180, 120, 130],  # Example fixation durations
+    scaler = StandardScaler()
 
-        'fixation_x': [200, 250, 220, 150, 180],  # Example x-coordinates
+    X_scaled = scaler.fit_transform(X)
 
-        'fixation_y': [300, 350, 280, 240, 260],  # Example y-coordinates
+    # Split data
 
-        'is_fixation': [True, True, True, True, True],  # Example fixation flags
+    X_train, X_test, y_train, y_test = train_test_split(
 
-        'has_dyslexia': [1, 1, 1, 0, 0]  # Example dyslexia labels for training
+        X_scaled, y, test_size=0.2, random_state=42
 
-    }
+    )
 
-    # Create DataFrame
+    # Create and train model
 
-    df = pd.DataFrame(data)
+    model = tf.keras.Sequential([
 
-    # Save to CSV file
+        tf.keras.layers.Dense(64, activation='relu', input_shape=(3,)),
 
-    df.to_csv('path_to_ETDD70_dataset.csv', index=False)
+        tf.keras.layers.Dense(32, activation='relu'),
 
-    print("Dataset created and saved as path_to_ETDD70_dataset.csv")"""
+        tf.keras.layers.Dense(1, activation='sigmoid')
 
-# Main training function
+    ])
 
-def main():
+    model.compile(optimizer='adam',
 
-    # Create dataset if it doesn't exist
+                 loss='binary_crossentropy',
 
-  #  create_dataset()
+                 metrics=['accuracy'])
 
-    # Train the model
+    model.fit(X_train, y_train,
 
-    detector = DyslexiaDetector()
+              validation_data=(X_test, y_test),
 
-    detector.train('path_to_ETDD70_dataset.csv')
+              epochs=10,
+
+              batch_size=32)
+
+    # Save model
+
+    model.save('dyslexia_model.h5')
+
+    return model
 
 if __name__ == "__main__":
 
-    main()
+    train_new_model('path_to_ETDD70_dataset.csv')
