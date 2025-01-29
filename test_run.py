@@ -14,11 +14,7 @@ test_data = pd.read_csv('path_to_test_data.csv')
 
 scaler = joblib.load('scaler.pkl')
 
-features = test_data[['mean_fixation_duration', 'std_fixation_duration', 
-
-                      'total_fixations', 'mean_saccade_length',
-
-                      'mean_x_position', 'mean_y_position']]
+features = test_data[['fixation_x', 'fixation_y', 'fixation_duration']]
 
 features_scaled = scaler.transform(features)
 
