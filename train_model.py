@@ -1,3 +1,11 @@
+import pandas as pd
+
+from sklearn.preprocessing import StandardScaler
+
+from sklearn.model_selection import train_test_split
+
+import tensorflow as tf
+
 def train_new_model(data_path):
 
     # Load data
