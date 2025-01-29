@@ -66,7 +66,7 @@ def load_and_preprocess_data(file_path):
 
     return train_test_split(features_scaled, target, test_size=0.2, random_state=42)
 
-def create_model():
+def create_model(input_shape):
 
     model = tf.keras.Sequential([
 
@@ -246,13 +246,6 @@ def main():
 
         st.session_state.tracker.tracking_data = []
 
-        if not st.session_state.text_displayed:
-
-            text_placeholder.empty()
-
-            sample_text()
-
-            st.session_state.text_displayed = True
 
     if stop_button:
 
