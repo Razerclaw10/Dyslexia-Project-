@@ -190,7 +190,7 @@ def main():
 
     # Create and train the model
 
-    model = create_model((X_train.shape[1],))
+    model = create_model((3,))
 
     model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=10)
 
