@@ -154,9 +154,9 @@ def load_and_preprocess_data(file_path):
 
     df.fillna(0, inplace=True)  # Example of handling missing values
 
-    features = df.drop('dyslexia_indicator', axis=1)
+    features = df.drop('has_dyslexia', axis=1)
 
-    target = df['dyslexia_indicator']
+    target = df['has_dyslexia']
 
     scaler = StandardScaler()
 
