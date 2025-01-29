@@ -12,7 +12,7 @@ test_data = pd.read_csv('path_to_test_data.csv')
 
 # Load scaler and scale features
 
-scaler = joblib.load('scaler.pkl')
+scaler = StandardScaler()
 
 features = test_data[['fixation_x', 'fixation_y', 'fixation_duration']]
 
