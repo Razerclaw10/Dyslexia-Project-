@@ -16,7 +16,7 @@ scaler = StandardScaler()
 
 features = test_data[['fixation_x', 'fixation_y', 'fixation_duration']]
 
-features_scaled = scaler.transform(features)
+features_scaled = scaler.fit_transform(features)
 
 # Load the trained model and make predictions
 
