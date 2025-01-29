@@ -186,7 +186,7 @@ def main():
 
     # Load and preprocess the ETDD70 dataset
 
-    X_train, X_val, y_train, y_val = load_and_preprocess_data('ETDD70.csv')
+    X_train, X_val, y_train, y_val = load_and_preprocess_data('path_to_ETDD70_dataset.csv')
 
     # Create and train the model
 
