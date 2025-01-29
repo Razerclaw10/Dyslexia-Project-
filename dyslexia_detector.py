@@ -32,13 +32,55 @@ class DyslexiaDetector:
 
     def predict(self, fixation_data):
 
-        # Prepare data for prediction
+        # Select only required features
 
         features = fixation_data[['fixation_x', 'fixation_y', 'fixation_duration']].values
+
+        # Reshape for single prediction if necessary
+
+        if len(features.shape) == 1:
+
+            features = features.reshape(1, -1)
 
         predictions = self.model.predict(features)
 
         return predictions
+
+def load_and_preprocess_data(file_path):
+
+    df = pd.read_csv(file_path)
+
+    # Select only the required features
+
+    features = df[['fixation_x', 'fixation_y', 'fixation_duration']]
+
+    target = df['has_dyslexia']
+
+    # Handle missing values
+
+    features.fillna(0, inplace=True)
+
+    scaler = StandardScaler()
+
+    features_scaled = scaler.fit_transform(features)
+
+    return train_test_split(features_scaled, target, test_size=0.2, random_state=42)
+
+def create_model():
+
+    model = tf.keras.Sequential([
+
+        tf.keras.layers.Dense(64, activation='relu', input_shape=(3,)),  # 3 features
+
+        tf.keras.layers.Dense(32, activation='relu'),
+
+        tf.keras.layers.Dense(1, activation='sigmoid')
+
+    ])
+
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+    return model
 
 class PupilTracker:
 
@@ -145,40 +187,6 @@ class PupilTracker:
                 self.current_fixation = None
 
         return self.current_fixation
-
-def load_and_preprocess_data(file_path):
-
-    df = pd.read_csv(file_path)
-
-    # Preprocess the data (handle missing values, normalization, etc.)
-
-    df.fillna(0, inplace=True)  # Example of handling missing values
-
-    features = df.drop('has_dyslexia', axis=1)
-
-    target = df['has_dyslexia']
-
-    scaler = StandardScaler()
-
-    features_scaled = scaler.fit_transform(features)
-
-    return train_test_split(features_scaled, target, test_size=0.2, random_state=42)
-
-def create_model(input_shape):
-
-    model = tf.keras.Sequential([
-
-        tf.keras.layers.Dense(64, activation='relu', input_shape=input_shape),
-
-        tf.keras.layers.Dense(32, activation='relu'),
-
-        tf.keras.layers.Dense(1, activation='sigmoid')
-
-    ])
-
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-
-    return model
 
 def main():
 
