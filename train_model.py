@@ -36,9 +36,11 @@ def train_new_model(data_path):
 
     model = tf.keras.Sequential([
 
-        tf.keras.layers.Dense(64, activation='relu', input_shape=(3,)),
+        tf.keras.layers.Dense(128, activation='relu', input_shape=(3,)),
 
-        tf.keras.layers.Dense(32, activation='relu'),
+        tf.keras.layers.Dense(64, activation='relu'),
+
+        tf.keras.layers.Dense(64, activation='relu'),
 
         tf.keras.layers.Dense(1, activation='sigmoid')
 
