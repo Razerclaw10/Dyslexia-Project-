@@ -70,11 +70,9 @@ def create_model(input_shape):
 
     model = tf.keras.Sequential([
 
-        tf.keras.layers.Dense(128, activation='relu', input_shape=(3,)),  # 3 features
+        tf.keras.layers.Dense(64, activation='relu', input_shape=(3,)),  # 3 features
 
-        tf.keras.layers.Dense(64, activation='relu'),
-        
-        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dense(32, activation='relu'),
 
         tf.keras.layers.Dense(1, activation='sigmoid')
 
@@ -330,7 +328,7 @@ def main():
                         data_point.update({
 
                             'fixation_duration': fixation['duration'],
-
+    
                             'fixation_x': fixation['position'][0] if fixation['position'] is not None else None,
 
                             'fixation_y': fixation['position'][1] if fixation['position'] is not None else None
