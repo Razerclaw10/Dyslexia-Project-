@@ -168,7 +168,7 @@ class PupilTracker:
 
 def main():
 
-    st.title("Advanced Pupil Tracker")
+    st.title("Dyslexia Detection using AI and Eye Tracking")
 
     # Load dataset and train model
 
