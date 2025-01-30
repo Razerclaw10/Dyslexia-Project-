@@ -28,7 +28,7 @@ def train_new_model(data_path):
 
     X_train, X_test, y_train, y_test = train_test_split(
 
-        X_scaled, y, test_size=0.2, random_state=42
+        X_scaled, y, test_size=0.2, random_state=23
 
     )
 
@@ -56,9 +56,9 @@ def train_new_model(data_path):
 
               validation_data=(X_test, y_test),
 
-              epochs=10,
+              epochs=20,
 
-              batch_size=32)
+              batch_size=60)
 
     # Save model
 

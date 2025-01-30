@@ -24,6 +24,10 @@ from sklearn.model_selection import train_test_split
 
 from sklearn.preprocessing import StandardScaler
 
+st.set_page_config(layout="wide")
+
+# Load Dyslexia Detection Model
+
 class DyslexiaDetector:
 
     def __init__(self, model_path='dyslexia_model.h5'):
@@ -32,31 +36,25 @@ class DyslexiaDetector:
 
     def predict(self, fixation_data):
 
-        # Select only required features
+        if fixation_data.empty:
+
+            return np.array([[0]])  # No data, return "No dyslexia"
 
         features = fixation_data[['fixation_x', 'fixation_y', 'fixation_duration']].values
-
-        # Reshape for single prediction if necessary
-
-        if len(features.shape) == 1:
-
-            features = features.reshape(1, -1)
 
         predictions = self.model.predict(features)
 
         return predictions
 
+# Load and Preprocess Dataset
+
 def load_and_preprocess_data(file_path):
 
     df = pd.read_csv(file_path)
 
-    # Select only the required features
-
     features = df[['fixation_x', 'fixation_y', 'fixation_duration']]
 
     target = df['has_dyslexia']
-
-    # Handle missing values
 
     features.fillna(0, inplace=True)
 
@@ -64,15 +62,19 @@ def load_and_preprocess_data(file_path):
 
     features_scaled = scaler.fit_transform(features)
 
-    return train_test_split(features_scaled, target, test_size=0.2, random_state=42)
+    return train_test_split(features_scaled, target, test_size=0.2, random_state=23)
+
+# Create Neural Network Model
 
 def create_model(input_shape):
 
     model = tf.keras.Sequential([
 
-        tf.keras.layers.Dense(64, activation='relu', input_shape=(3,)),  # 3 features
+        tf.keras.layers.Dense(128, activation='relu', input_shape=input_shape),
 
-        tf.keras.layers.Dense(32, activation='relu'),
+        tf.keras.layers.Dense(64, activation='relu'),
+
+        tf.keras.layers.Dense(64, activation='relu'),
 
         tf.keras.layers.Dense(1, activation='sigmoid')
 
@@ -82,35 +84,23 @@ def create_model(input_shape):
 
     return model
 
+# Pupil Tracking with MediaPipe Face Mesh
+
 class PupilTracker:
 
     def __init__(self):
 
         self.mp_face_mesh = mp.solutions.face_mesh
 
-        self.face_mesh = self.mp_face_mesh.FaceMesh(
+        self.face_mesh = self.mp_face_mesh.FaceMesh(max_num_faces=1, refine_landmarks=True,
 
-            max_num_faces=1,
-
-            refine_landmarks=True,
-
-            min_detection_confidence=0.5,
-
-            min_tracking_confidence=0.5
-
-        )
+                                                     min_detection_confidence=0.7, min_tracking_confidence=0.7)
 
         self.LEFT_IRIS = [474, 475, 476, 477]
 
         self.RIGHT_IRIS = [469, 470, 471, 472]
 
-        self.fixation_threshold = 20
-
-        self.fixation_duration = 40
-
-        self.positions_history = deque(maxlen=10)
-
-        self.current_fixation = None
+        self.positions_history = deque(maxlen=20)
 
         self.fixations = []
 
@@ -124,13 +114,9 @@ class PupilTracker:
 
         if results.multi_face_landmarks:
 
-            mesh_points = np.array([
+            mesh_points = np.array([np.multiply([p.x, p.y], [frame.shape[1], frame.shape[0]]).astype(int)
 
-                np.multiply([p.x, p.y], [frame.shape[1], frame.shape[0]]).astype(int)
-
-                for p in results.multi_face_landmarks[0].landmark
-
-            ])
+                                    for p in results.multi_face_landmarks[0].landmark])
 
             left_iris = mesh_points[self.LEFT_IRIS]
 
@@ -148,7 +134,7 @@ class PupilTracker:
 
         self.positions_history.append((current_position, timestamp))
 
-        if len(self.positions_history) < 2:
+        if len(self.positions_history) < 5:
 
             return None
 
@@ -156,55 +142,45 @@ class PupilTracker:
 
         timestamps = np.array([p[1] for p in self.positions_history])
 
-        max_distance = max([euclidean(positions[0], p) for p in positions])
+        max_distance = np.std(positions, axis=0).max()
 
         duration = timestamps[-1] - timestamps[0]
 
-        if max_distance < self.fixation_threshold and duration >= self.fixation_duration:
+        if max_distance < 8 and duration >= 50:
 
-            if self.current_fixation is None:
+            fixation = {
 
-                self.current_fixation = {
+                'start_time': timestamps[0],
 
-                    'start_time': timestamps[0],
+                'position': np.mean(positions, axis=0),
 
-                    'position': np.mean(positions, axis=0) if len(positions) > 0 else None,
+                'duration': duration
 
-                    'duration': duration
+            }
 
-                }
+            self.fixations.append(fixation)
 
-            else:
+            return fixation
 
-                self.current_fixation['duration'] = duration
+        return None
 
-        else:
-
-            if self.current_fixation is not None:
-
-                self.fixations.append(self.current_fixation)
-
-                self.current_fixation = None
-
-        return self.current_fixation
+# Main Streamlit App
 
 def main():
 
     st.title("Advanced Pupil Tracker")
 
-    # Load and preprocess the ETDD70 dataset
+    # Load dataset and train model
 
     X_train, X_val, y_train, y_val = load_and_preprocess_data('path_to_ETDD70_dataset.csv')
+    
+    batch_size = 60
 
-    # Create and train the model
+    model = create_model(input_shape=(3,))
 
-    model = create_model((3,))
-
-    model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=10)
+    model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=20, batch_size=batch_size)
 
     model.save('dyslexia_model.h5')
-
-    # Initialize session state
 
     if 'detector' not in st.session_state:
 
@@ -218,25 +194,15 @@ def main():
 
         st.session_state.recording = False
 
-    if 'text_displayed' not in st.session_state:
-
-        st.session_state.text_displayed = False
-
     # Camera input
 
     cap = cv2.VideoCapture(0)
 
     frame_placeholder = st.empty()
 
-    text_placeholder = st.empty()
+    start_button = st.button("Start Recording")
 
-    # Control buttons
-
-    col1, col2 = st.columns(2)
-
-    start_button = col1.button("Start Recording")
-
-    stop_button = col2.button("Stop Recording")
+    stop_button = st.button("Stop Recording")
 
     if start_button:
 
@@ -246,18 +212,19 @@ def main():
 
         st.session_state.tracker.tracking_data = []
 
-
     if stop_button:
 
         st.session_state.recording = False
 
-        st.session_state.text_displayed = False
-
-        text_placeholder.empty()
-
-        if len(st.session_state.tracker.tracking_data) > 0:
+        if st.session_state.tracker.tracking_data:
 
             df = pd.DataFrame(st.session_state.tracker.tracking_data)
+
+            filename = f"fixation_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+
+            df.to_csv(filename, index=False)
+
+            st.success(f"Fixation data saved to {filename}")
 
             fixation_data = df[df['is_fixation']]
 
@@ -272,14 +239,6 @@ def main():
             else:
 
                 st.success("No indicators of dyslexia detected.")
-
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-            filename = f"pupil_tracking_data_{timestamp}.csv"
-
-            df.to_csv(filename, index=False)
-
-            st.success(f"Data saved to {filename}")
 
     try:
 
@@ -305,45 +264,51 @@ def main():
 
                 fixation = st.session_state.tracker.detect_fixation(avg_position, current_time)
 
-                if st.session_state.recording:
+                data_point = {
 
-                    data_point = {
+                    'timestamp': current_time,
 
-                        'timestamp': current_time,
+                    'left_pupil_x': left_center[0],
 
-                        'left_pupil_x': left_center[0],
+                    'left_pupil_y': left_center[1],
 
-                        'left_pupil_y': left_center[1],
+                    'right_pupil_x': right_center[0],
 
-                        'right_pupil_x': right_center[0],
+                    'right_pupil_y': right_center[1],
 
-                        'right_pupil_y': right_center[1],
+                    'is_fixation': fixation is not None
 
-                        'is_fixation': fixation is not None
+                }
 
-                    }
+                if fixation:
 
-                    if fixation is not None:
+                    data_point.update({
 
-                        data_point.update({
+                        'fixation_duration': fixation['duration'],
 
-                            'fixation_duration': fixation['duration'],
-    
-                            'fixation_x': fixation['position'][0] if fixation['position'] is not None else None,
+                        'fixation_x': fixation['position'][0],
 
-                            'fixation_y': fixation['position'][1] if fixation['position'] is not None else None
+                        'fixation_y': fixation['position'][1]
 
-                        })
+                    })
 
-                    st.session_state.tracker.tracking_data.append(data_point)
-
-                if fixation is not None and fixation['position'] is not None:
-
-                    cv2.circle(frame, tuple(fixation['position'].astype(int)), 10, (0, 0, 255), 2)
+                st.session_state.tracker.tracking_data.append(data_point)
 
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             frame_placeholder.image(frame, channels="RGB")
+
+        # Image Display (Restored)
+
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div style="display: flex; justify-content: center;">
+                <img src="https://i.imghippo.com/files/wGQf9595AhM.png" width="2000">
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     except Exception as e:
 
